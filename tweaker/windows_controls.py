@@ -6,6 +6,7 @@ import uuid
 import xml.etree.ElementTree as ET
 from contextlib import contextmanager
 from .targets import decode, executable, approved_image, RUN_KEY, PUBLISHERS
+from .branding import OPTIONAL_TASK_PATHS
 
 ABSENT = {'exists': False}
 
@@ -118,7 +119,7 @@ def task_read(target, export_to=None):
     if set(spec)!={'path','name','fingerprint'} or not spec['path'].startswith('\\') or spec['path'].lower().startswith('\\microsoft\\'):
         raise ValueError('Invalid or protected task target')
     # Only opt-in optional namespace: no accidental updater/scheduler targeting.
-    if spec['path']!='\\FrameWiseOptional\\': raise ValueError('Task is outside the optional namespace')
+    if spec['path'] not in OPTIONAL_TASK_PATHS: raise ValueError('Task is outside the optional namespace')
     script="& { $sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value; $xml=Export-ScheduledTask -TaskPath " + literal(spec['path']) + ' -TaskName ' + literal(spec['name']) + "; [pscustomobject]@{sid=$sid;xml=$xml} }"
     result=psjson(script)
     path, enabled, fingerprint=task_definition(result['xml'],result['sid'])
@@ -203,7 +204,7 @@ def eco(target, value=None):
             if set(value)!={'control','state'} or any(type(v) is not int or v<0 or v>0xffffffff for v in value.values()): raise ValueError('Invalid QoS snapshot')
             # Only bit 0 can change: all other policy flags must match current state.
             if (value['control']^state.control)&~1 or (value['state']^state.state)&~1:
-                raise RuntimeError('Other power-throttling flags changed outside FrameWise')
+                raise RuntimeError('Other power-throttling flags changed outside ApexxTweaks')
             state=State(1,value['control'],value['state'])
             put=k.SetProcessInformation; put.argtypes=get.argtypes; put.restype=w.BOOL
             if not put(handle,4,ctypes.byref(state),ctypes.sizeof(state)): raise ctypes.WinError(ctypes.get_last_error())

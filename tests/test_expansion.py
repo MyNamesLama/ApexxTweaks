@@ -62,7 +62,7 @@ class TaskPolicyTests(unittest.TestCase):
         for xml in [task_xml(sid='S-1-5-18'),task_xml(level='HighestAvailable'),task_xml(command=r'C:\Windows\System32\cmd.exe'),task_xml(args='--update'),task_xml(action='<ComHandler><ClassId>x</ClassId></ComHandler>')]:
             with self.subTest(xml=xml),self.assertRaises((ValueError,RuntimeError)): task_definition(xml,'S-1-5-21-42')
     def test_outside_namespace(self):
-        for path in ['\\Microsoft\\Windows\\','\\Google\\','\\','\\FrameWiseOptional\\Other\\']:
+        for path in ['\\Microsoft\\Windows\\','\\Google\\','\\','\\ApexxTweaksOptional\\Other\\']:
             target=encode('task',path=path,name='Updater',fingerprint='x')
             with self.assertRaises(ValueError): task_read(target)
 

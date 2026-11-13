@@ -3,8 +3,9 @@ import ntpath
 import platform as system_platform
 from .actions import optional_action
 from .targets import encode, RUN_KEY, executable
-from .windows_controls import signature, task_definition, eco
+from .windows_controls import signature, task_definition, eco, literal
 from .analysis import rows
+from .branding import OPTIONAL_TASK_PATHS
 
 def discover():
     from .platform import WINDOWS, psjson
@@ -44,7 +45,9 @@ def discover():
             desired={'control':current['control']|1,'state':current['state']|1}
             actions.append(optional_action('eco',target,'EcoQoS: '+ntpath.basename(path)+' PID '+str(process['ProcessId']),desired))
         except Exception as error: rejected.append({'process':process.get('ProcessId'),'reason':str(error)})
-    tasks=psjson("& { $sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value; @(Get-ScheduledTask -TaskPath '\\FrameWiseOptional\\' -ErrorAction SilentlyContinue | ForEach-Object { [pscustomobject]@{name=$_.TaskName;path=$_.TaskPath;sid=$sid;xml=(Export-ScheduledTask -TaskName $_.TaskName -TaskPath $_.TaskPath)} }) }")
+    tasks=[]
+    for namespace in OPTIONAL_TASK_PATHS:
+        tasks.extend(rows(psjson("& { $sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value; @(Get-ScheduledTask -TaskPath " + literal(namespace) + " -ErrorAction SilentlyContinue | ForEach-Object { [pscustomobject]@{name=$_.TaskName;path=$_.TaskPath;sid=$sid;xml=(Export-ScheduledTask -TaskName $_.TaskName -TaskPath $_.TaskPath)} }) }")))
     for task in rows(tasks):
         try:
             path,_,fingerprint=task_definition(task['xml'],task['sid']); signature(path)

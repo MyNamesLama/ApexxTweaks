@@ -6,15 +6,15 @@ from pathlib import Path
 
 def verify(folder):
     folder = Path(folder)
-    executable = folder / 'FrameWise.exe'
+    executable = folder / 'ApexxTweaks.exe'
     with executable.open('rb') as f:
         if f.read(2) != b'MZ':
-            raise ValueError('FrameWise.exe is not a Windows PE executable')
+            raise ValueError('ApexxTweaks.exe is not a Windows PE executable')
         f.seek(0x3c)
         offset = struct.unpack('<I', f.read(4))[0]
         f.seek(offset)
         if f.read(4) != b'PE\0\0' or struct.unpack('<H', f.read(2))[0] != 0x8664:
-            raise ValueError('FrameWise.exe must target AMD64/x64')
+            raise ValueError('ApexxTweaks.exe must target AMD64/x64')
     for pattern in ('python313.dll', '_tkinter.pyd', 'init.tcl', 'tk.tcl'):
         if not any(folder.rglob(pattern)):
             raise ValueError(f'Missing bundled runtime dependency: {pattern}')

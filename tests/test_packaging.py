@@ -21,7 +21,7 @@ class BundleValidationTests(unittest.TestCase):
         struct.pack_into('<I', header, 0x3c, 128)
         header[128:132] = b'PE\0\0'
         struct.pack_into('<H', header, 132, 0x8664)
-        (self.folder / 'FrameWise.exe').write_bytes(header)
+        (self.folder / 'ApexxTweaks.exe').write_bytes(header)
         for name in ('python313.dll', '_tkinter.pyd', 'init.tcl', 'tk.tcl'):
             target = self.folder / '_internal' / name
             target.parent.mkdir(exist_ok=True)
@@ -38,7 +38,7 @@ class BundleValidationTests(unittest.TestCase):
             module.verify(self.folder)
 
     def test_x86_binary_rejected(self):
-        exe = self.folder / 'FrameWise.exe'
+        exe = self.folder / 'ApexxTweaks.exe'
         data = bytearray(exe.read_bytes())
         struct.pack_into('<H', data, 132, 0x14c)
         exe.write_bytes(data)
@@ -51,6 +51,6 @@ class BundleValidationTests(unittest.TestCase):
             module.verify(self.folder)
 
     def test_non_windows_binary_rejected(self):
-        (self.folder / 'FrameWise.exe').write_bytes(b'\x7fELF')
+        (self.folder / 'ApexxTweaks.exe').write_bytes(b'\x7fELF')
         with self.assertRaisesRegex(ValueError, 'Windows PE'):
             module.verify(self.folder)

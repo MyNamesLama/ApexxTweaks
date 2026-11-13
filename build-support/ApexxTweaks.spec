@@ -1,4 +1,4 @@
-# Windows x64 portable directory: Python runtime, Tcl/Tk and all FrameWise modules.
+# Windows x64 portable directory: Python runtime, Tcl/Tk and all ApexxTweaks modules.
 from pathlib import Path
 import sys
 from PyInstaller.utils.hooks import collect_submodules
@@ -20,7 +20,7 @@ pyz = PYZ(a.pure)
 exe = EXE(
     pyz, a.scripts, [],
     exclude_binaries=True,
-    name='FrameWise',
+    name='ApexxTweaks',
     console=False,
     debug=False,
     strip=False,
@@ -28,4 +28,4 @@ exe = EXE(
     uac_admin=False,
     disable_windowed_traceback=False,
 )
-coll = COLLECT(exe, a.binaries, a.datas, name='FrameWise', strip=False, upx=False)
+coll = COLLECT(exe, a.binaries, a.datas, name='ApexxTweaks', strip=False, upx=False)

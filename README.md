@@ -1,4 +1,4 @@
-# FrameWise 0.2
+# ApexxTweaks 0.2
 
 Windows 10/11 gaming diagnostics and reversible optimization, developed on Bazzite Linux. Native dark Tk desktop UI; no browser runtime, telemetry, resident service or kernel driver. No measured FPS improvement or universal anti-cheat approval is claimed.
 
@@ -21,13 +21,13 @@ Windows 10/11 gaming diagnostics and reversible optimization, developed on Bazzi
 | Best performance AC mode | Supported Windows 11 user-configured AC mode | Compatible devices using Balanced base plan; effective mode can be overridden | Exact original mode GUID |
 | Recording policy | Windows 10 AllowGameDVR=0 | When Windows game recording was using resources | Original DWORD or absence |
 | Optional startup | Remove one exact current-user Run value | Avoid future optional-app launches after sign-in | Exact command/type; refuse changed entry or unsigned replacement |
-| Optional task | Disable selected app-launch task under `\FrameWiseOptional\` | Prevent selected launch automation during play | Original enabled state; verify XML fingerprint |
+| Optional task | Disable selected app-launch task under `\ApexxTweaksOptional\` | Prevent selected launch automation during play | Original enabled state; verify XML fingerprint |
 | Optional app EcoQoS | Change execution-speed QoS bit only | Reduce interference/energy from an approved background app on suitable CPUs | Original flags, bound to PID and creation time |
 | Fax startup | Disable stopped, dependency-free optional Fax service | Avoid optional startup; normally no measurable FPS benefit | Exact startup mode |
 
 EcoQoS is **not a CPU usage cap** and may slow or stutter voice/music. Only the chosen instances are changed; child/new instances are not automatically enrolled. Signed image, current-user token, full path and creation time are checked; exited/reused PIDs are never written during restore. No browsers, launchers, updaters, games, anti-cheat or security processes qualify. Common Discord updater-based startup commands intentionally remain read-only.
 
-Task changes require explicit opt-in into `\FrameWiseOptional\`, current-user SID, non-elevated principal, a single direct Spotify/Discord launch and approved arguments/signature. This is not permission to disable arbitrary third-party tasks. Update/security/system tasks remain untouched. Running tasks are never stopped. See [task opt-in instructions](docs/USAGE.md).
+Task changes require explicit opt-in into `\ApexxTweaksOptional\`, current-user SID, non-elevated principal, a single direct Spotify/Discord launch and approved arguments/signature. This is not permission to disable arbitrary third-party tasks. Update/security/system tasks remain untouched. Running tasks are never stopped. See [task opt-in instructions](docs/USAGE.md).
 
 **Game Mode, Windows 11 recording and GPU preferences:** buttons open supported Windows Settings pages, with state/guidance where available. These remain user-driven and are outside the rollback journal. No undocumented UserGpuPreferences, HAGS or recording registry writes. The documented Game Mode registry location is read for status, not treated as a public write contract.
 
@@ -44,7 +44,7 @@ Start as a normal user. Explicitly restart elevated only when choosing the Fax o
 
 Build/download instructions: [Standalone Windows x64 executable](docs/WINDOWS_BUILD.md).
 
-GitHub Actions builds a complete PyInstaller portable directory, creates **FrameWise-windows-x64.zip**, smoke-tests that exact ZIP without Python on PATH, and uploads it as **FrameWise-windows-x64** only after successful testing. Download it from a successful **Actions → Windows x64 portable build** run, extract the artifact, then extract the inner ZIP and launch **FrameWise/FrameWise.exe**. Keep the entire folder, including `_internal`. **No Python installation is required for end users.**
+GitHub Actions builds a complete PyInstaller portable directory, creates **ApexxTweaks-windows-x64.zip**, smoke-tests that exact ZIP without Python on PATH, and uploads it as **ApexxTweaks-windows-x64** only after successful testing. Download it from a successful **Actions → ApexxTweaks Windows x64 portable build** run, extract the artifact, then extract the inner ZIP and launch **ApexxTweaks/ApexxTweaks.exe**. Keep the entire folder, including `_internal`. **No Python installation is required for end users.**
 
 For local packaging, install CPython 3.13 x64 with Tcl/Tk and PowerShell 7, then run:
 
@@ -68,8 +68,8 @@ python3 -m compileall -q tweaker launcher.py
 GUI requires Tkinter. Use a Fedora distrobox if the host Python omits it:
 
 ```bash
-distrobox create --name framewise-dev --image registry.fedoraproject.org/fedora:latest
-distrobox enter framewise-dev
+distrobox create --name ApexxTweaks-dev --image registry.fedoraproject.org/fedora:latest
+distrobox enter ApexxTweaks-dev
 sudo dnf install python3 python3-tkinter
 python3 -m tweaker
 ```
@@ -92,7 +92,7 @@ Linux previews the interface and analyzes imported captures. Windows mutations a
 5. Import ≥3 independent CSVs per condition under the same experiment context. Compare average, lows, p99, variation and graphs; regressions matter too.
 6. Undo a selected action or restore all. Persistent multi-action Apply is per-action, not atomic; Gaming Mode startup has scoped rollback. Conflicts/errors remain in History for recovery. If the watcher fails, it explicitly disarms and leaves restoration to the user.
 
-Backups/logs/history: `%LOCALAPPDATA%\FrameWise`; Linux preview: `~/.local/share/FrameWise`. The 0.1 history format remains readable; new records add action descriptions and session ownership. Preserve snapshot folders and `history.json` until every change is restored. A corrupt journal must be repaired from backups before further writes. App exports can contain usernames, paths, process information and task definitions; review before sharing.
+Backups/logs/history: `%LOCALAPPDATA%\ApexxTweaks`; Linux preview: `~/.local/share/ApexxTweaks`. Existing installations automatically reuse their populated legacy data folder in place; see [upgrade and rollback compatibility](docs/UPGRADING.md). No snapshots or journal targets are renamed. The 0.1 history format remains readable; new records add action descriptions and session ownership. Preserve snapshot folders and `history.json` until every change is restored. A corrupt journal must be repaired from backups before further writes. App exports can contain usernames, paths, process information and task definitions; review before sharing.
 
 Restore refuses external-setting conflicts. QoS restore of a vanished original process is recorded as restored-by-lifetime. Missing executables/signature failures or changed task definitions can block restore: inspect the stored snapshot and restore manually through the owning application's settings, Task Scheduler or Services. Original plan backup can be imported with `powercfg /import` if needed; inspect the new GUID before activating it. No blanket force mode is exposed.
 

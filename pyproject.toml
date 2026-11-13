@@ -3,14 +3,14 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "framewise"
+name = "ApexxTweaks"
 version = "0.2.0"
 description = "Conservative Windows gaming performance lab"
 requires-python = ">=3.11"
 dependencies = []
 
 [project.scripts]
-framewise = "tweaker.gui:main"
+ApexxTweaks = "tweaker.gui:main"
 
 [tool.setuptools.packages.find]
 include = ["tweaker*"]

@@ -49,3 +49,13 @@ Additional hardware/Windows release gates:
 No real-game, anti-cheat, thermal, input-latency or FPS improvement validation has occurred on Windows here.
 
 Final regression additions verify that unresolved optional definitions reload for individual undo, query-only identity validation precedes write-capable handle acquisition, write handles are revalidated while the query handle stays alive, missing memory data remains unknown, and explicit CIM game PIDs support truncated process-counter names.
+
+## ApexxTweaks rename validation
+
+The renamed application discovers **85 tests: 82 passed and 3 native Windows tests skipped**, using managed CPython 3.13 with Tk on Bazzite. The source GUI smoke test (`python launcher.py --smoke-test`) also passed. Both build/smoke PowerShell scripts parsed successfully; workflow YAML, PyInstaller spec syntax, exact metadata/entry-point capitalization, renamed artifact/ZIP paths and build/smoke path references were checked. `git diff --check` passed.
+
+Rename-specific tests cover fresh product-named data, in-place legacy data and settings retention, original snapshot bytes and absolute paths, successful legacy journal undo, legacy task action identities, validation of both exact optional-task namespaces, the shared cross-version mutex, ambiguous-store refusal, old/new empty-directory cases, metadata refresh without journal rewriting, GUI titles/headings, legacy benchmark loading and rebranded saved action descriptions.
+
+New build names: `ApexxTweaks.exe`, `dist/ApexxTweaks/`, `ApexxTweaks-windows-x64.zip`, `ApexxTweaks-windows-x64` application artifact and `ApexxTweaks-windows-build-diagnostics` diagnostics artifact. The source package remains `tweaker`. Compatibility identifiers and historical audit paths are intentionally preserved; see [upgrade instructions](UPGRADING.md).
+
+The renamed Windows executable and GitHub Actions workflow have **not been executed on Windows during this rename**. Linux tests and syntax checks do not establish Windows startup or functionality. The workflow retains the extracted-ZIP smoke test with isolated app data and Python removed from PATH; successful Windows results must be inspected before claiming the renamed executable works.

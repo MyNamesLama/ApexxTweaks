@@ -1,4 +1,4 @@
-name: Windows x64 portable build
+name: ApexxTweaks Windows x64 portable build
 on:
   push:
   pull_request:
@@ -39,9 +39,9 @@ jobs:
       - name: Upload tested portable application
         uses: actions/upload-artifact@v4
         with:
-          name: FrameWise-windows-x64
+          name: ApexxTweaks-windows-x64
           path: |
-            dist/FrameWise-windows-x64.zip
+            dist/ApexxTweaks-windows-x64.zip
             dist/SHA256SUMS.txt
             dist/windows-smoke.json
           if-no-files-found: error
@@ -51,11 +51,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: FrameWise-windows-build-diagnostics
+          name: ApexxTweaks-windows-build-diagnostics
           path: |
             build-dependencies.txt
-            build/FrameWise/warn-FrameWise.txt
-            build/FrameWise/xref-FrameWise.html
+            build/ApexxTweaks/warn-ApexxTweaks.txt
+            build/ApexxTweaks/xref-ApexxTweaks.html
             dist/windows-smoke.json
           if-no-files-found: warn
           retention-days: 14

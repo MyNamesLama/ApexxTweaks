@@ -23,3 +23,7 @@ Task definitions are not recreated or overwritten; only the enabled flag is rest
 AC preflight is repeated before applying, but restoration does not require AC: it restores original settings on battery too. Management checks constrain recording policy; user-token/signature/principal checks constrain optional targets. OS configuration can race another administrator between validation and mutation; the application cannot provide system-wide transactional exclusion. Do not manage the same settings simultaneously from multiple tools/accounts/sessions.
 
 Snapshots, XML backups, logs and exports are local, user-writable diagnostic artifacts, not tamper-resistant audit stores. Preserve them until all changes are restored; corruption must be investigated before new writes. No journal auto-migration deletes old data.
+
+## Product rename compatibility
+
+`branding.py` centralizes ApexxTweaks product identity and the minimum legacy compatibility identifiers. Fresh data uses the new name; populated legacy data is reused in place to preserve absolute snapshot references. Two populated stores are refused instead of silently merged. Both approved optional-task namespaces remain accepted; target IDs/fingerprints are never rewritten. The Windows mutex stays shared with previous versions. Human-readable saved action metadata is rebranded at presentation time; raw history and backup paths remain accurate. See [upgrade instructions](UPGRADING.md).

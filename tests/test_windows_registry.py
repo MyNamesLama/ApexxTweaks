@@ -8,7 +8,7 @@ from tweaker.windows_controls import reg_read, reg_write, ABSENT
 class NativeRegistryRoundtrip(unittest.TestCase):
     def test_unicode_value_and_absence(self):
         import winreg
-        key='Software\\FrameWiseTests\\'+uuid.uuid4().hex
+        key='Software\\ApexxTweaksTests\\'+uuid.uuid4().hex
         with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER,key): pass
         try:
             self.assertEqual(reg_read(key,'fixture'),ABSENT)

@@ -57,7 +57,7 @@ def optional_action(kind, target, title, desired):
         'startup': ('Remove only the selected current-user Run value; save its exact type and command for undo.',
                     'Prevents this optional app starting at the next sign-in, reducing its idle resource cost.',
                     'Low: automatic app launch stops. Does not stop an already running app. App updates can recreate the entry.'),
-        'task': ('Disable an opt-in current-user non-elevated direct app-launch task under \\FrameWiseOptional\\; never stop a running task.',
+        'task': ('Disable an opt-in current-user non-elevated direct app-launch task under \\ApexxTweaksOptional\\; never stop a running task.',
                  'Prevents an explicitly selected optional app being launched during play.',
                  'Low: selected launch automation will not run until restored. Existing running instances are unaffected.'),
         'eco': ('Enable only the execution-speed EcoQoS bit on this signed optional app instance using SetProcessInformation.',

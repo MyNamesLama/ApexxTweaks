@@ -1,7 +1,7 @@
 # Tests the exact distributable ZIP, away from the checkout and without Python on PATH.
 [CmdletBinding()]
 param(
-    [string]$Archive = (Join-Path (Split-Path -Parent $PSScriptRoot) 'dist/FrameWise-windows-x64.zip'),
+    [string]$Archive = (Join-Path (Split-Path -Parent $PSScriptRoot) 'dist/ApexxTweaks-windows-x64.zip'),
     [string]$Report = (Join-Path (Split-Path -Parent $PSScriptRoot) 'dist/windows-smoke.json')
 )
 $ErrorActionPreference = 'Stop'
@@ -9,7 +9,7 @@ Set-StrictMode -Version Latest
 if (-not $IsWindows) { throw 'Windows is required for the executable smoke test.' }
 $Archive = (Resolve-Path $Archive).Path
 $Report = [System.IO.Path]::GetFullPath($Report)
-$tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('FrameWise smoke ' + [guid]::NewGuid().ToString('N'))
+$tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('ApexxTweaks smoke ' + [guid]::NewGuid().ToString('N'))
 $oldPath = $env:PATH
 $oldAppData = $env:LOCALAPPDATA
 $oldPythonHome = $env:PYTHONHOME
@@ -25,8 +25,8 @@ $result = [ordered]@{
 try {
     New-Item $tempRoot -ItemType Directory -Force | Out-Null
     Expand-Archive -LiteralPath $Archive -DestinationPath $tempRoot
-    $exe = Join-Path $tempRoot 'FrameWise/FrameWise.exe'
-    if (-not (Test-Path $exe -PathType Leaf)) { throw 'ZIP does not contain FrameWise/FrameWise.exe' }
+    $exe = Join-Path $tempRoot 'ApexxTweaks/ApexxTweaks.exe'
+    if (-not (Test-Path $exe -PathType Leaf)) { throw 'ZIP does not contain ApexxTweaks/ApexxTweaks.exe' }
     $env:LOCALAPPDATA = Join-Path $tempRoot 'isolated user data'
     New-Item $env:LOCALAPPDATA -ItemType Directory -Force | Out-Null
     $env:PYTHONHOME = $null
@@ -43,7 +43,7 @@ try {
     $result.exit_code = $process.ExitCode
     if ($process.ExitCode -ne 0) { throw "Extracted executable exited with code $($process.ExitCode)" }
     # Fresh app-data creation witnesses App construction, not just an early zero exit.
-    if (-not (Test-Path (Join-Path $env:LOCALAPPDATA 'FrameWise') -PathType Container)) {
+    if (-not (Test-Path (Join-Path $env:LOCALAPPDATA 'ApexxTweaks') -PathType Container)) {
         throw 'Executable exited without constructing the application (isolated app-data directory absent)'
     }
     $result.status = 'passed'

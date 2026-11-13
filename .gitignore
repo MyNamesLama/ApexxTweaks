@@ -5,4 +5,4 @@ build/
 dist/
 *.egg-info/
 *.spec
-!build-support/FrameWise.spec
+!build-support/ApexxTweaks.spec

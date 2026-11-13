@@ -39,8 +39,10 @@ class Engine:
 
     def register(self, actions):
         for action in actions:
-            if action.id in self.actions and self.actions[action.id] != action:
+            existing=self.actions.get(action.id)
+            if existing and (existing.target!=action.target or existing.desired!=action.desired):
                 raise ValueError('Action identity collision')
+            # Branding/documentation upgrades may refresh metadata, never the target or desired state.
             self.actions[action.id] = action
 
     def apply(self, action_id, session_id=None):
@@ -92,7 +94,7 @@ class Engine:
             self.log('Expired process restored by lifetime: ' + record['action'])
             return
         if current not in (record['desired'], record['original']) and not force:
-            raise RuntimeError('Setting changed outside FrameWise; restore refused to avoid overwriting it.')
+            raise RuntimeError('Setting changed outside ApexxTweaks; restore refused to avoid overwriting it.')
         if current != record['original']:
             self.backend.write(record['target'], record['original'])
         if self.backend.read(record['target']) != record['original']:

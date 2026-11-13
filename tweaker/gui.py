@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from pathlib import Path
 from .actions import PROFILES
+from .branding import APP_NAME, JOURNAL_MUTEX, data_directory, branded_text
 from .engine import Engine, atomic_json
 from .platform import WindowsBackend, WINDOWS, powershell
 from . import diagnostics, benchmark
@@ -22,11 +23,11 @@ class App:
         self.root=root
         self.timers=set(); self.closing=False
         self.root.bind('<Destroy>',lambda event:self.shutdown() if event.widget is self.root else None)
-        self.root.title('FrameWise • Gaming performance lab')
+        self.root.title(f'{APP_NAME} • Gaming performance lab')
         self.root.geometry('1180x800'); self.root.minsize(920,650); self.root.configure(bg=BG)
         self.pool=concurrent.futures.ThreadPoolExecutor(max_workers=1)
         self.results=queue.Queue(); self.busy=False
-        self.data=Path(os.environ.get('LOCALAPPDATA', Path.home()/'.local/share'))/'FrameWise'
+        self.data=data_directory()
         self.engine=Engine(WindowsBackend(), self.data)
         self.runs={'Before':[], 'After':[]}
         if (self.data/'benchmarks.json').exists():
@@ -41,7 +42,7 @@ class App:
         style.configure('TButton',padding=(12,8)); style.map('TButton',background=[('active','#303e54')])
         style.configure('TNotebook.Tab',padding=(18,12)); style.configure('TFrame',background=BG)
         style.configure('TLabel',background=BG)
-        tk.Label(root,text='FRAMEWISE',fg=ACCENT,bg=BG,font=('Segoe UI',24,'bold')).pack(anchor='w',padx=26,pady=(20,0))
+        tk.Label(root,text=APP_NAME,fg=ACCENT,bg=BG,font=('Segoe UI',24,'bold')).pack(anchor='w',padx=26,pady=(20,0))
         tk.Label(root,text='Gaming performance lab  /  Observe · Change · Verify · Restore',fg=MUTED,bg=BG,font=('Segoe UI',11)).pack(anchor='w',padx=28,pady=(4,16))
         self.tabs=ttk.Notebook(root); self.tabs.pack(fill='both',expand=True,padx=24)
         self.pages={}
@@ -99,7 +100,7 @@ class App:
             except Exception as e:
                 self.action_states={}; self.refresh_actions()
                 self.engine.log(str(e)); self.status.set('Operation failed — see error and logs')
-                messagebox.showerror('FrameWise',str(e))
+                messagebox.showerror('ApexxTweaks',str(e))
         except queue.Empty: pass
         self.schedule(100,self.drain)
 
@@ -161,7 +162,7 @@ class App:
             state=self.action_states.get(a.id,'Not inspected')
             owned=any(r['action']==a.id and r['status']!='restored' for r in self.engine.records)
             if owned: state+=' • journaled'
-            self.action_tree.insert('', 'end',iid=a.id,values=('☑' if self.choices[a.id].get() else '☐',a.category,a.title,state))
+            self.action_tree.insert('', 'end',iid=a.id,values=('☑' if self.choices[a.id].get() else '☐',a.category,branded_text(a.title),state))
         if selected and self.action_tree.exists(selected[0]): self.action_tree.selection_set(selected[0])
 
     def toggle_action(self):
@@ -173,7 +174,7 @@ class App:
         selected=self.action_tree.selection()
         if not selected: return
         a=self.engine.actions[selected[0]]
-        self.display(self.details,f'{a.title}  [{a.id}]\nState: {self.action_states.get(a.id, "Not inspected")}\n\n{a.description}\nExpected effect: {a.benefit}\nRisk: {a.risk}\nPermissions: {a.permissions}\nRequirements: {a.windows}; {a.hardware}\nEvidence: {a.evidence}\nGaming Mode eligible: {a.session_safe}')
+        self.display(self.details,branded_text(f'{a.title}  [{a.id}]\nState: {self.action_states.get(a.id, "Not inspected")}\n\n{a.description}\nExpected effect: {a.benefit}\nRisk: {a.risk}\nPermissions: {a.permissions}\nRequirements: {a.windows}; {a.hardware}\nEvidence: {a.evidence}\nGaming Mode eligible: {a.session_safe}'))
 
     def states(self):
         states={}
@@ -195,7 +196,7 @@ class App:
     def apply(self):
         ids=[k for k,v in self.choices.items() if v.get()]
         if not ids: messagebox.showinfo('No selection','Select an action to review.'); return
-        detail='\n\n'.join(self.engine.actions[k].title+'\n'+self.engine.actions[k].risk for k in ids)
+        detail='\n\n'.join(branded_text(self.engine.actions[k].title+'\n'+self.engine.actions[k].risk) for k in ids)
         if messagebox.askyesno('Confirm changes',detail+'\n\nOriginal values will be saved first. This persistent batch is per-action, not all-or-nothing. Apply?'):
             def done(value):
                 self.action_states={}; self.refresh_actions(); messagebox.showinfo('Result',value)
@@ -212,7 +213,7 @@ class App:
     def discover_optional(self):
         def done(result):
             actions,rejected=result; self.engine.register(actions); self.refresh_actions()
-            messagebox.showinfo('Discovery',f'{len(actions)} approved actions available. {len(rejected)} items remained read-only.\nTasks are restricted to explicitly opt-in \\FrameWiseOptional\\ app-launch tasks. No running tasks are stopped.')
+            messagebox.showinfo('Discovery',f'{len(actions)} approved actions available. {len(rejected)} items remained read-only.\nTasks are restricted to approved, explicitly opt-in app-launch task folders. No running tasks are stopped.')
             self.display(self.gamebox,{'available':[a.title for a in actions],'read_only':rejected})
         self.work(discovery.discover,done)
 
@@ -257,7 +258,7 @@ class App:
         if self.session.active: return
         ids=[k for k,v in self.choices.items() if v.get() and self.engine.actions[k].session_safe]
         if not ids: messagebox.showinfo('Gaming Mode','Select session-safe Power, Background or Tasks actions in Optimize. Startup and recording-policy actions are persistent-only.'); return
-        details='\n\n'.join(self.engine.actions[k].title+'\n'+self.engine.actions[k].risk for k in ids)
+        details='\n\n'.join(branded_text(self.engine.actions[k].title+'\n'+self.engine.actions[k].risk) for k in ids)
         if messagebox.askyesno('Gaming Mode review',details+'\n\nPersistent-only selections are excluded. Apply temporarily? Failures trigger rollback of this session only.'):
             def started(_):
                 self.action_states={}; self.refresh_actions()
@@ -392,7 +393,7 @@ class App:
             self.work(lambda:self.engine.restore(records[-1]),lambda _:self.history())
     def restore_point(self):
         if messagebox.askyesno('Restore point','Ask Windows to create a restore point? Administrator and System Protection may be required.'):
-            self.work(lambda:powershell("Checkpoint-Computer -Description 'FrameWise user-requested checkpoint' -RestorePointType MODIFY_SETTINGS"),lambda _:messagebox.showinfo('Windows','Checkpoint command completed. Check System Protection for availability.'))
+            self.work(lambda:powershell("Checkpoint-Computer -Description 'ApexxTweaks user-requested checkpoint' -RestorePointType MODIFY_SETTINGS"),lambda _:messagebox.showinfo('Windows','Checkpoint command completed. Check System Protection for availability.'))
     def close(self):
         if self.busy:
             messagebox.showinfo('Working','Wait for the operation before closing.'); return
@@ -410,9 +411,9 @@ def main(smoke=False):
         kernel=ctypes.WinDLL('kernel32',use_last_error=True)
         kernel.CreateMutexW.argtypes=[ctypes.c_void_p,ctypes.c_int,ctypes.c_wchar_p]
         kernel.CreateMutexW.restype=ctypes.c_void_p
-        lock=kernel.CreateMutexW(None,False,'Local\\FrameWiseJournal')
+        lock=kernel.CreateMutexW(None,False,JOURNAL_MUTEX)
         if not lock or ctypes.get_last_error()==183:
-            messagebox.showerror('FrameWise','FrameWise is already running or cannot acquire its journal lock.'); root.destroy(); return
+            messagebox.showerror('ApexxTweaks','ApexxTweaks is already running or cannot acquire its journal lock.'); root.destroy(); return
     try:
         app=App(root)
         if smoke:
