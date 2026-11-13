@@ -2,13 +2,14 @@
 
 from PySide6.QtWidgets import (
     QHBoxLayout,
-    QGridLayout,
+    QWidget,
 )
 from ...platform import WINDOWS
 from ...analysis import rows
 from ..controller import measurements
 from ..widgets import (
     Card,
+    ResponsiveGrid,
     Switch,
     Chart,
     label,
@@ -31,7 +32,7 @@ class Monitor(Page):
         self.live = Switch("Enable live monitoring")
         self.live.setEnabled(WINDOWS)
         self.live.toggled.connect(lambda _: window.update_timers())
-        controls = QHBoxLayout()
+        controls = row()
         controls.addWidget(
             control(self, "Inspect system", self.c.inspect_system, windows=True)
         )
@@ -41,16 +42,19 @@ class Monitor(Page):
         controls.addWidget(
             control(self, "Sustained diagnostics", self.c.sustained, windows=True)
         )
-        controls.addStretch()
-        controls.addWidget(label("Live monitoring", "muted"))
-        controls.addWidget(self.live)
+        live_group = QWidget()
+        live_box = QHBoxLayout(live_group)
+        live_box.setContentsMargins(0, 0, 0, 0)
+        live_box.addWidget(label("Live monitoring", "muted"))
+        live_box.addWidget(self.live)
+        controls.addWidget(live_group)
         self.box.addLayout(controls)
         self.monitor_note = label(
             "Monitoring is off. It pauses when this page is hidden or the window is minimized.",
             "muted",
         )
         self.box.addWidget(self.monitor_note)
-        grid = QGridLayout()
+        self.grid = grid = ResponsiveGrid(max_columns=2, preferred_width=280)
         grid.setSpacing(14)
         self.cards = {}
         self.charts = {}
@@ -71,7 +75,7 @@ class Monitor(Page):
             card.box.addWidget(foot)
             self.cards[key] = (value, foot)
             self.charts[key] = chart
-            grid.addWidget(card, i // 2, i % 2, 1, 2 if i == 2 else 1)
+            grid.addWidget(card)
         self.box.addLayout(grid)
         info = Card()
         info.box.addWidget(label("Hardware & diagnostics", "heading"))

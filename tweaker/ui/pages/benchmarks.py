@@ -1,7 +1,6 @@
 """Product page. Controls delegate to the controller, never Windows writes."""
 
 from PySide6.QtWidgets import (
-    QHBoxLayout,
     QLineEdit,
     QFileDialog,
     QTableWidget,
@@ -12,6 +11,7 @@ from PySide6.QtWidgets import (
 from ..widgets import (
     Card,
     MetricCard,
+    ResponsiveGrid,
     Chart,
     Histogram,
     ComparisonChart,
@@ -62,7 +62,7 @@ class Benchmarks(Page):
             )
         )
         self.box.addWidget(context)
-        metrics = QHBoxLayout()
+        self.metrics_grid = metrics = ResponsiveGrid(max_columns=4, preferred_width=185)
         self.metrics = []
         for name in ["Average FPS", "1% low FPS", "0.1% low FPS", "p99 · ms"]:
             card = MetricCard(name, "—", "Select an imported run")

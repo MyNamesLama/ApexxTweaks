@@ -32,6 +32,22 @@ jobs:
         run: |
           python -m unittest discover -s tests -v
           if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }
+      - name: Check compact Qt layouts at Windows DPI scales
+        run: |
+          $apexxPreviousScale = $env:QT_SCALE_FACTOR
+          $apexxPreviousPlatform = $env:QT_QPA_PLATFORM
+          try {
+            $env:QT_QPA_PLATFORM = 'offscreen'
+            foreach ($apexxScale in @('1', '1.25', '1.5', '2')) {
+              $env:QT_SCALE_FACTOR = $apexxScale
+              Write-Output "Checking compact layouts at QT_SCALE_FACTOR=$apexxScale"
+              python -m unittest discover -s tests -p test_responsive_layout.py -v
+              if ($LASTEXITCODE -ne 0) { throw "Qt layout regression at scale $apexxScale" }
+            }
+          } finally {
+            $env:QT_SCALE_FACTOR = $apexxPreviousScale
+            $env:QT_QPA_PLATFORM = $apexxPreviousPlatform
+          }
       - name: Package complete standalone application and ZIP
         run: ./scripts/build-windows.ps1
       - name: Smoke-test extracted ZIP without Python on PATH

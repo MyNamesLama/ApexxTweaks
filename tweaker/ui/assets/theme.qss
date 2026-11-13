@@ -57,3 +57,8 @@ QStatusBar { background: #121610; color: #9da995; border-top: 1px solid #2c3526;
 QWidget#navigationBody, QWidget#navigationViewport { background: #151816; }
 QPushButton#danger:disabled { color: #7e806f; background: #24271f; border-color: #353b2e; }
 QPushButton#nav:focus { border: 1px solid #bdff45; }
+QPushButton#collapse { background: transparent; border-color: transparent; }
+QPushButton#collapse:hover { background: #30372b; }
+QMenu { background: #191c1a; color: #f2f4ef; border: 1px solid #394035; }
+QMenu::item:selected { background: #30382c; }
+QLabel#buttonCaption { background: transparent; font-weight: 600; }

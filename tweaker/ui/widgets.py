@@ -1,7 +1,7 @@
 """Reusable cards, accessible switches and cheap-on-idle painted plots."""
 
 import math
-from PySide6.QtCore import Qt, QRectF, QSize, QRect, QPoint
+from PySide6.QtCore import Qt, QRectF, QSize, QRect
 from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import (
     QFrame,
@@ -15,20 +15,22 @@ from PySide6.QtWidgets import (
     QLayout,
 )
 from .theme import ACCENT, MUTED
+from .text import WrappingLabel
 
 
 def label(text="", role="", wrap=True):
-    w = QLabel(text)
+    wrapping = wrap and role not in ("tag", "limeTag")
+    w = WrappingLabel(text) if wrapping else QLabel(text)
     w.setTextFormat(Qt.TextFormat.PlainText)
     if role:
         w.setObjectName(role)
-    w.setWordWrap(wrap and role not in ("tag", "limeTag", "eyebrow"))
+    w.setWordWrap(wrapping)
     w.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
     return w
 
 
 def button(text, callback, primary=False, danger=False):
-    w = QPushButton(text.replace("&", "&&"))
+    w = WrappingButton(text)
     w.setAccessibleName(text)
     w.setCursor(Qt.CursorShape.PointingHandCursor)
     if primary:
@@ -47,6 +49,20 @@ class Card(QFrame):
         self.box.setContentsMargins(20, 18, 20, 18)
         self.box.setSpacing(12)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+
+    def responsive_width_hint(self):
+        values = [
+            child
+            for child in self.findChildren(QLabel)
+            if child.objectName() == "metric"
+        ]
+        return max(
+            [0]
+            + [
+                min(400, child.fontMetrics().horizontalAdvance(child.text()) + 44)
+                for child in values
+            ]
+        )
 
 
 class MetricCard(Card):
@@ -212,7 +228,7 @@ def clear_layout(layout):
 
 
 class FlowLayout(QLayout):
-    """Wrap command buttons at narrow widths rather than force horizontal scrolling."""
+    """Height-for-width rows: wrap complete controls and fully measure wrapped text."""
 
     def __init__(self, spacing=10):
         super().__init__()
@@ -222,6 +238,7 @@ class FlowLayout(QLayout):
 
     def addItem(self, item):
         self.items.append(item)
+        self.invalidate()
 
     def count(self):
         return len(self.items)
@@ -230,7 +247,11 @@ class FlowLayout(QLayout):
         return self.items[index] if 0 <= index < len(self.items) else None
 
     def takeAt(self, index):
-        return self.items.pop(index) if 0 <= index < len(self.items) else None
+        if 0 <= index < len(self.items):
+            result = self.items.pop(index)
+            self.invalidate()
+            return result
+        return None
 
     def expandingDirections(self):
         return Qt.Orientation(0)
@@ -243,33 +264,120 @@ class FlowLayout(QLayout):
 
     def setGeometry(self, rect):
         super().setGeometry(rect)
-        self.arrange(rect, False)
+        self.arrange(rect)
 
     def sizeHint(self):
         return self.minimumSize()
 
     def minimumSize(self):
-        size = QSize()
+        size = QSize(0, 0)
         for item in self.items:
-            size = size.expandedTo(item.minimumSize())
-        return size
+            if not item.isEmpty():
+                size = size.expandedTo(item.minimumSize())
+        margins = self.contentsMargins()
+        return size + QSize(
+            margins.left() + margins.right(), margins.top() + margins.bottom()
+        )
+
+    @staticmethod
+    def item_height(item, width):
+        height = (
+            item.heightForWidth(width)
+            if item.hasHeightForWidth()
+            else item.sizeHint().height()
+        )
+        return max(item.minimumSize().height(), height)
 
     def arrange(self, rect, test=False):
-        x = rect.x()
-        y = rect.y()
+        m = self.contentsMargins()
+        area = rect.adjusted(m.left(), m.top(), -m.right(), -m.bottom())
+        x = area.x()
+        y = area.y()
         height = 0
         for item in self.items:
+            if item.isEmpty():
+                continue
             size = item.sizeHint()
-            w = min(size.width(), rect.width())
-            if x > rect.x() and x + w > rect.right() + 1:
-                x = rect.x()
+            width = min(
+                max(size.width(), item.minimumSize().width()), max(1, area.width())
+            )
+            if x > area.x() and x + width > area.right() + 1:
+                x = area.x()
                 y += height + self.spacing()
                 height = 0
+            item_height = self.item_height(item, width)
             if not test:
-                item.setGeometry(QRect(QPoint(x, y), QSize(w, size.height())))
-            x += w + self.spacing()
-            height = max(height, size.height())
-        return y + height - rect.y()
+                item.setGeometry(QRect(x, y, width, item_height))
+            x += width + self.spacing()
+            height = max(height, item_height)
+        return y + height - rect.y() + m.bottom()
+
+
+class ResponsiveGrid(FlowLayout):
+    """Ordered equal-width cards, with real font/content-driven 1..N column reflow.
+
+    A compact minimum is valid because the geometry actually stacks all children
+    and reports the full resulting height. No controls are hidden or compressed.
+    """
+
+    def __init__(self, max_columns=3, preferred_width=240, spacing=14):
+        super().__init__(spacing)
+        self.max_columns = max_columns
+        self.preferred_width = preferred_width
+        self.columns = 1
+
+    def column_count(self, width):
+        active = [item for item in self.items if not item.isEmpty()]
+        if not active:
+            return 1
+        preferred = max(
+            self.preferred_width,
+            self.minimumSize().width(),
+            *(
+                item.widget().responsive_width_hint()
+                if hasattr(item.widget(), "responsive_width_hint")
+                else 0
+                for item in active
+            ),
+        )
+        return max(
+            1,
+            min(
+                self.max_columns,
+                len(active),
+                (max(0, width) + self.spacing()) // (preferred + self.spacing()),
+            ),
+        )
+
+    def arrange(self, rect, test=False):
+        m = self.contentsMargins()
+        area = rect.adjusted(m.left(), m.top(), -m.right(), -m.bottom())
+        active = [item for item in self.items if not item.isEmpty()]
+        columns = self.column_count(area.width())
+        if not test:
+            self.columns = columns
+        gap = self.spacing()
+        width = max(1, (area.width() - (columns - 1) * gap) // columns)
+        y = area.y()
+        for start in range(0, len(active), columns):
+            group = active[start : start + columns]
+            row_height = max(self.item_height(item, width) for item in group)
+            if not test:
+                for column, item in enumerate(group):
+                    cell_width = (
+                        width
+                        if column < columns - 1
+                        else max(
+                            1, area.right() + 1 - (area.x() + column * (width + gap))
+                        )
+                    )
+                    item.setGeometry(
+                        QRect(
+                            area.x() + column * (width + gap), y, cell_width, row_height
+                        )
+                    )
+            y += row_height + gap
+        return y - rect.y() - (gap if active else 0) + m.bottom()
 
 
 class ComparisonChart(QWidget):
@@ -317,4 +425,109 @@ class ComparisonChart(QWidget):
             0,
             self.height() - 8,
             "Gray: before  ·  Lime: after  ·  Each metric uses its own scale",
+        )
+
+
+class WrappingButton(QPushButton):
+    """Native button behavior with a real height-for-width, selectable-size caption."""
+
+    def __init__(self, text):
+        super().__init__()
+        from PySide6.QtWidgets import QHBoxLayout
+
+        self._caption_text = text
+        self._nav_icon = None
+        self._nav_icon_size = QSize(20, 20)
+        self.setStyleSheet("QPushButton { padding: 0; }")
+        box = QHBoxLayout(self)
+        box.setContentsMargins(14, 9, 14, 9)
+        box.setSpacing(10)
+        self.picture = QLabel()
+        self.picture.setFixedSize(self._nav_icon_size)
+        self.picture.hide()
+        self.caption = label(text.strip())
+        self.caption.setObjectName("buttonCaption")
+        self.caption.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.caption.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        self.caption.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        for child in (self.picture, self.caption):
+            child.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        box.addWidget(self.picture)
+        box.addWidget(self.caption, 1)
+        policy = self.sizePolicy()
+        policy.setHorizontalPolicy(QSizePolicy.Policy.Preferred)
+        policy.setVerticalPolicy(QSizePolicy.Policy.Preferred)
+        policy.setHeightForWidth(True)
+        self.setSizePolicy(policy)
+        self.setAccessibleName(text)
+        self.toggled.connect(lambda _: self.caption.update())
+
+    def caption_color(self):
+        # Qt ancestor pseudo-states do not consistently resolve child palettes.
+        role = self.objectName()
+        if not self.isEnabled():
+            return QColor("#b0b99f" if role == "primary" else "#778072")
+        if role == "primary":
+            return QColor("#152007")
+        if role == "danger":
+            return QColor("#f0bca1")
+        if role == "nav":
+            return QColor("#c8ff68" if self.isChecked() else "#aab2a6")
+        if role == "collapse":
+            return QColor("#aab2a6")
+        return QColor("#f2f4ef")
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if hasattr(self, "caption"):
+            self.caption.update()
+
+    def setText(self, text):
+        self._caption_text = text
+        self.caption.setText(text.strip())
+        self.caption.setVisible(bool(text.strip()))
+        self.updateGeometry()
+
+    def text(self):
+        return self._caption_text
+
+    def setIcon(self, icon):
+        self._nav_icon = icon
+        self.picture.setPixmap(icon.pixmap(self._nav_icon_size))
+        self.picture.show()
+        self.updateGeometry()
+
+    def setIconSize(self, size):
+        self._nav_icon_size = size
+        self.picture.setFixedSize(size)
+        if self._nav_icon is not None:
+            self.picture.setPixmap(self._nav_icon.pixmap(size))
+
+    def sizeHint(self):
+        return self.layout().totalSizeHint() if self.layout() else super().sizeHint()
+
+    def minimumSizeHint(self):
+        return (
+            self.layout().totalMinimumSize()
+            if self.layout()
+            else super().minimumSizeHint()
+        )
+
+    def heightForWidth(self, width):
+        return (
+            self.layout().totalHeightForWidth(width)
+            if self.layout()
+            else super().heightForWidth(width)
+        )
+
+
+class NavigationButton(WrappingButton):
+    """Checkable sidebar caption remains readable with large system font metrics."""
+
+    def __init__(self, text):
+        super().__init__(text)
+        self.setObjectName("nav")
+        self.layout().setContentsMargins(12, 10, 12, 10)
+        self.caption.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )

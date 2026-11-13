@@ -11,7 +11,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QVBoxLayout,
     QLabel,
-    QPushButton,
     QToolButton,
     QStackedWidget,
     QProgressBar,
@@ -21,7 +20,7 @@ from PySide6.QtWidgets import (
 from shiboken6 import isValid
 from .controller import Controller, PAGES
 from .theme import stylesheet, ACCENT
-from .widgets import label
+from .widgets import label, FlowLayout, NavigationButton
 from .icons import icon
 from .pages import (
     Dashboard,
@@ -82,7 +81,7 @@ class App(QMainWindow):
         logo = QLabel()
         logo.setPixmap(icon("logo", ACCENT, 30).pixmap(30, 30))
         brandrow.addWidget(logo)
-        self.brand = label(APP_NAME, "brand", False)
+        self.brand = label(APP_NAME, "brand")
         brandrow.addWidget(self.brand)
         brandrow.addStretch()
         side.addLayout(brandrow)
@@ -102,7 +101,7 @@ class App(QMainWindow):
         for i, (name, key) in enumerate(zip(PAGES, keys)):
             if name == "Settings":
                 side.addStretch()
-            b = QPushButton("  " + name)
+            b = NavigationButton("  " + name)
             b.setObjectName("nav")
             b.setCheckable(True)
             b.setIcon(icon(key))
@@ -117,7 +116,8 @@ class App(QMainWindow):
         self.safety = label("DOCUMENTED. REVERSIBLE.", "caption")
         side.addSpacing(12)
         side.addWidget(self.safety)
-        self.collapse = QToolButton()
+        self.collapse = NavigationButton("Collapse sidebar")
+        self.collapse.setObjectName("collapse")
         self.collapse.setIcon(icon("menu"))
         self.collapse.setAccessibleName("Collapse or expand sidebar")
         self.collapse.setToolTip("Collapse / expand navigation")
@@ -134,11 +134,11 @@ class App(QMainWindow):
         outer.addLayout(right, 1)
         bar = QFrame()
         bar.setObjectName("topbar")
-        barbox = QHBoxLayout(bar)
+        barbox = FlowLayout()
+        bar.setLayout(barbox)
         barbox.setContentsMargins(28, 15, 28, 15)
-        self.breadcrumb = label("Workspace  /  Dashboard", "muted", False)
+        self.breadcrumb = label("Workspace  /  Dashboard", "muted")
         barbox.addWidget(self.breadcrumb)
-        barbox.addStretch()
         self.environment = label(
             "Windows desktop"
             if WINDOWS
@@ -278,11 +278,6 @@ class App(QMainWindow):
     def set_collapsed(self, value, persist=True):
         self.collapsed = value
         target = 76 if value else 224
-        self.collapse.setToolButtonStyle(
-            Qt.ToolButtonStyle.ToolButtonIconOnly
-            if value
-            else Qt.ToolButtonStyle.ToolButtonTextBesideIcon
-        )
         self.collapse.setText("" if value else "Collapse sidebar")
         self.brand.setVisible(not value)
         self.edition.setVisible(not value)

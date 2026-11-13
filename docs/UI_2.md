@@ -46,3 +46,5 @@ Screenshots were inspected during development. Compact 920×540 and default 1260
 Persistent multi-selection remains available under Optimization → Select multiple → Review selection. Selections remain explicit across search filters; confirmations list all selected actions. Persistent batches retain per-action failure semantics and recoverable earlier successes. The UI refuses conflicting power methods before starting a batch.
 
 Reproduce the uninspected preview images using `.venv/bin/python scripts/capture-ui.py` after installing the project. It uses isolated temporary app data and does not run native diagnostics or apply settings. On the development host the normal Linux Wayland startup smoke test also passed; offscreen tests alone are not being presented as window-manager validation.
+
+The compact Windows layout correction replaces fixed metric columns with automatic card stacking and all critical fixed control rows with height-for-width reflow. Text/buttons wrap rather than clip, including long hardware identifiers and paths. No larger minimum window is required. See [responsive layout details](RESPONSIVE_LAYOUT.md) for root cause and regression coverage.

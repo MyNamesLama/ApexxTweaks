@@ -54,8 +54,8 @@ class Settings(Page):
         self.minimized.toggled.connect(
             lambda value: self.save("start_minimized", value)
         )
-        startup = QHBoxLayout()
-        startup.addWidget(label("Startup page"), 1)
+        startup = row()
+        startup.addWidget(label("Startup page"))
         self.startup = QComboBox()
         self.startup.addItems(PAGES)
         self.startup.setCurrentText(self.c.preferences["startup_page"])

@@ -3,7 +3,6 @@
 import json
 from PySide6.QtWidgets import (
     QVBoxLayout,
-    QHBoxLayout,
     QCheckBox,
     QDialog,
     QDialogButtonBox,
@@ -101,15 +100,15 @@ class ActionCard(Card):
         c = page.c
         state = c.states.get(action.id, {})
         owned = c.owned(action.id)
-        top = QHBoxLayout()
+        top = FlowLayout()
         title = label(branded_text(action.title), "heading")
-        top.addWidget(title, 1)
+        top.addWidget(title)
         risk = action.risk.split(":")[0]
         top.addWidget(label(risk + " risk", "tag"))
         self.box.addLayout(top)
         short = branded_text(action.description.split(". ")[0].rstrip(".") + ".")
         self.box.addWidget(label(short, "muted"))
-        footer = QHBoxLayout()
+        footer = FlowLayout()
         status = (
             "Applied · verified"
             if state.get("active")
@@ -126,7 +125,6 @@ class ActionCard(Card):
             footer.addWidget(label("Administrator", "tag"))
         if owned:
             footer.addWidget(label("Backup saved", "tag"))
-        footer.addStretch()
         more = button(
             "Details",
             lambda: details(

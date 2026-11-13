@@ -2,7 +2,6 @@
 
 from PySide6.QtWidgets import (
     QVBoxLayout,
-    QHBoxLayout,
     QLineEdit,
     QComboBox,
     QCheckBox,
@@ -62,7 +61,7 @@ class Optimization(Page):
             )
         )
         self.box.addWidget(self.recommended)
-        filters = QHBoxLayout()
+        filters = row()
         self.search = QLineEdit()
         self.search.setPlaceholderText("Search optimizations…")
         self.search.setAccessibleName("Search optimizations")
@@ -80,13 +79,17 @@ class Optimization(Page):
                 "Advanced",
             ]
         )
+        self.category.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.category.setMinimumContentsLength(14)
         self.category.setAccessibleName("Optimization category")
         self.sort = QComboBox()
         self.sort.addItems(["Recommended", "Name", "Risk", "Status"])
         self.sort.setAccessibleName("Sort optimizations")
         self.applied = QCheckBox("Applied only")
-        filters.addWidget(self.search, 2)
-        filters.addWidget(self.category, 1)
+        filters.addWidget(self.search)
+        filters.addWidget(self.category)
         filters.addWidget(self.sort)
         filters.addWidget(self.applied)
         self.box.addLayout(filters)

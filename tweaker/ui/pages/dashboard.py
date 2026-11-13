@@ -2,14 +2,14 @@
 
 from PySide6.QtWidgets import (
     QVBoxLayout,
-    QHBoxLayout,
-    QGridLayout,
+    QWidget,
 )
 from ...analysis import rows
 from ..controller import measurements
 from ..widgets import (
     Card,
     MetricCard,
+    ResponsiveGrid,
     label,
     button,
 )
@@ -43,7 +43,7 @@ class Dashboard(Page):
             )
         )
         self.box.addWidget(self.recovery)
-        self.grid = QGridLayout()
+        self.grid = ResponsiveGrid(max_columns=3, preferred_width=240)
         self.grid.setSpacing(14)
         self.metrics = {}
         for i, name in enumerate(
@@ -58,18 +58,20 @@ class Dashboard(Page):
         ):
             card = MetricCard(name)
             self.metrics[name] = card
-            self.grid.addWidget(card, i // 3, i % 3)
+            self.grid.addWidget(card)
         self.box.addLayout(self.grid)
         self.summary = Card()
-        self.summary_grid = QHBoxLayout()
+        self.summary_grid = ResponsiveGrid(max_columns=3, preferred_width=160)
         self.counts = []
         for title in ["Available to apply", "Applied · verified", "Changes to restore"]:
-            box = QVBoxLayout()
+            panel = QWidget()
+            box = QVBoxLayout(panel)
+            box.setContentsMargins(0, 0, 0, 0)
             value = label("—", "metric")
             box.addWidget(value)
             box.addWidget(label(title, "muted"))
             self.counts.append(value)
-            self.summary_grid.addLayout(box)
+            self.summary_grid.addWidget(panel)
         self.summary.box.addLayout(self.summary_grid)
         self.box.addWidget(self.summary)
         hero = Card(hero=True)
@@ -93,11 +95,10 @@ class Dashboard(Page):
             )
         )
         self.box.addWidget(hero)
-        bottom = QHBoxLayout()
+        bottom = row()
         bottom.addWidget(
-            label("Last-read snapshots · No automatic settings changes", "muted", False)
+            label("Last-read snapshots · No automatic settings changes", "muted")
         )
-        bottom.addStretch()
         bottom.addWidget(label("SAFE BY DESIGN", "limeTag"))
         self.box.addLayout(bottom)
         self.box.addStretch()

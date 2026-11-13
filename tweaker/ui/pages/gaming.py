@@ -61,7 +61,7 @@ class Gaming(Page):
         )
         hero.box.addLayout(row(self.emergency))
         self.box.addWidget(hero)
-        profiles = QHBoxLayout()
+        profiles = row()
         profiles.addWidget(label("Profile suggestions", "muted"))
         self.profile = QComboBox()
         self.profile.addItems(list(PROFILES))
@@ -69,7 +69,6 @@ class Gaming(Page):
         profiles.addWidget(
             control(self, "Use compatible suggestions", self.select_profile)
         )
-        profiles.addStretch()
         self.box.addLayout(profiles)
         self.box.addWidget(label("Session optimizations", "heading"))
         self.box.addWidget(
