@@ -1,17 +1,26 @@
-# ApexxTweaks 0.2
+# ApexxTweaks 2.0
 
-Windows 10/11 gaming diagnostics and reversible optimization, developed on Bazzite Linux. Native dark Tk desktop UI; no browser runtime, telemetry, resident service or kernel driver. No measured FPS improvement or universal anti-cheat approval is claimed.
+Windows 10/11 gaming diagnostics and reversible optimization, developed on Bazzite Linux. A completely redesigned PySide6 Widgets desktop UI with a collapsible sidebar, near-black surfaces and electric lime accents. No embedded browser, telemetry, resident service or kernel driver. No measured FPS improvement or universal anti-cheat approval is claimed.
 
-## What's new
+## The 2.0 workspace
 
-- **Real optional-app actions:** remove selected current-user logon Run entries, disable opt-in launch tasks, and apply Windows EcoQoS to selected signed Spotify/Discord instances. Everything else remains read-only. No termination, suspension or game-process policy changes.
-- **Windows 11 AC power mode:** uses documented PowerGet/SetUserConfiguredACPowerMode, with AC, API and Balanced-plan checks. Classic High performance-plan testing remains available separately. Conflicting power methods cannot overlap.
-- **Windows 10 recording policy:** supported GameDVR policy on eligible unmanaged Pro/Enterprise/Education desktop systems, with admin confirmation and exact value/absence restoration. Windows 11 capture control stays in the supported Settings UI.
-- **Gaming Mode:** applies only explicitly selected session-safe Power, Background and Task actions. Owns only changes it actually made; rolls back its own changes if startup fails. Optionally restores after Fortnite has been observed and is absent for two consecutive five-second polls. Closing restores; interrupted exits require journal recovery next launch.
-- **Sustained diagnostics:** bounded repeated CPU/core, memory, process and GPU-engine samples. GPU candidates require Fortnite PID attribution and sufficient coverage; a single spike is insufficient. Reports background CPU normalized to logical-processor count and distinguishes unavailable telemetry from low utilization.
-- **Hardware-specific Fortnite report:** NVIDIA Reflex guidance, AMD/Intel recommendations, multi-GPU selection, RAM/refresh caveats and supported rendering-mode comparisons.
-- **Advanced comparisons:** experiment contexts, duplicate-CSV rejection, FPS/lows/p99 comparison graphs and run-level bootstrap intervals. Archives preserve earlier experiments.
-- **Searchable action categories:** individual toggles, full requirements/risks, verified active states, per-action undo, profile selection and discovery.
+![ApexxTweaks dashboard, Linux preview](docs/screenshots/dashboard.png)
+
+The screenshot is a real Linux Qt preview with uninspected hardware, not fabricated Windows readings. [More screenshots and design notes](docs/UI_2.md).
+
+| Page | What it does |
+|---|---|
+| Dashboard | Hardware and last-read usage cards, current power plan, Gaming Mode status, verified action counts and direct recovery/diagnostic access |
+| Optimization | Searchable action cards, categories, recommendations, risk/admin/backup indicators, applied-only filter, sorting, compatibility checks, individual Apply/Restore and guided Windows Settings |
+| Gaming Mode | Explicit session selections, Balanced/Competitive/Custom suggestions, Fortnite detection/guidance, optional exit watching and emergency session restore |
+| System Monitor | Opt-in CPU, peak 3D engine and RAM charts, bounded sustained sampling, hardware/driver/storage/network details and read-only process activity |
+| Benchmarks | Independent CSV imports, FPS/lows/p99, distribution and bucket-peak trace plots, before/after bars and intervals, archives and exports |
+| Restore Center | Original values, timestamps, backup/history details, conflict inspection, individual restore, Restore All and optional Windows restore-point request |
+| Settings | Reduce motion, start minimized, startup page, monitor interval, local logs/diagnostic export, version, licenses and repository |
+
+The UI is a new presentation layer over the existing backend. Action IDs, typed snapshots, legacy folders, optional-task namespaces, scoped Gaming Mode rollback and anti-cheat boundaries remain unchanged. Human-readable descriptions are shown on demand; raw diagnostic/journal details remain available through explicit detail buttons.
+
+Long operations run through one serialized Qt worker with main-thread result signals. There is no idle polling timer. Monitoring runs only when explicitly enabled, System Monitor is visible and the window is not minimized; game watching runs only for an explicitly armed active session. Finite page/sidebar transitions can be disabled. Qt Widgets/Gui/Svg are used; no QML, WebEngine, QtCharts, external icon/font service or animation loop.
 
 ## Actions and scope
 
@@ -33,9 +42,10 @@ Task changes require explicit opt-in into `\ApexxTweaksOptional\`, current-user 
 
 ## Run or build on Windows
 
-Official CPython 3.13 x64 with Tcl/Tk; Windows 10 build 19041+ or Windows 11 desktop, Windows PowerShell 5.1/CIM. Prefer a currently supported Windows release. Optional providers, policy restrictions or unsupported APIs produce errors, not fabricated readings.
+For source development: official CPython 3.13 x64 and the pinned PySide6 Essentials dependency; Windows 10 build 19041+ or Windows 11 desktop, Windows PowerShell 5.1/CIM. Prefer a currently supported Windows release. Optional providers, policy restrictions or unsupported APIs produce errors, not fabricated readings.
 
 ```powershell
+python -m pip install -e .
 python -m unittest discover -s tests -v
 python -m tweaker
 ```
@@ -46,7 +56,7 @@ Build/download instructions: [Standalone Windows x64 executable](docs/WINDOWS_BU
 
 GitHub Actions builds a complete PyInstaller portable directory, creates **ApexxTweaks-windows-x64.zip**, smoke-tests that exact ZIP without Python on PATH, and uploads it as **ApexxTweaks-windows-x64** only after successful testing. Download it from a successful **Actions → ApexxTweaks Windows x64 portable build** run, extract the artifact, then extract the inner ZIP and launch **ApexxTweaks/ApexxTweaks.exe**. Keep the entire folder, including `_internal`. **No Python installation is required for end users.**
 
-For local packaging, install CPython 3.13 x64 with Tcl/Tk and PowerShell 7, then run:
+For local packaging, install CPython 3.13 x64 and PowerShell 7, then run:
 
 ```powershell
 python -m pip install -r requirements-build.txt .
@@ -58,39 +68,28 @@ No installer or signing certificate is included. PyInstaller cannot cross-compil
 
 ## Bazzite development
 
-The core remains dependency-free:
+Use a managed CPython 3.13 virtual environment. The host Python may be newer than the pinned Qt wheels support. The backend still uses only the standard library; the frontend requires Qt.
 
 ```bash
-python3 -m unittest discover -s tests -v
-python3 -m compileall -q tweaker launcher.py
+uv venv --python 3.13
+uv pip install --python .venv/bin/python -e .
+.venv/bin/python -m tweaker
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m unittest discover -s tests -v
+QT_QPA_PLATFORM=offscreen .venv/bin/python launcher.py --smoke-test
 ```
 
-GUI requires Tkinter. Use a Fedora distrobox if the host Python omits it:
+`uv` is a developer tool, not an end-user runtime requirement. Alternatively create a Python 3.13 venv and `python -m pip install -e .`. If the desktop Qt platform plugin lacks native X11/Wayland libraries, use a development distrobox with the corresponding native dependencies; avoid layering Python GUI packages onto the immutable host. `QT_QPA_PLATFORM=offscreen` supports automated widget rendering and tests without desktop integration. It does not validate Windows or Linux window-manager behavior.
 
-```bash
-distrobox create --name ApexxTweaks-dev --image registry.fedoraproject.org/fedora:latest
-distrobox enter ApexxTweaks-dev
-sudo dnf install python3 python3-tkinter
-python3 -m tweaker
-```
-
-Run from the repository directory. Alternatively, a `uv` managed CPython with Tcl/Tk supports preview/testing:
-
-```bash
-uv run --python 3.13 --no-project python -m unittest discover -s tests -v
-uv run --python 3.13 --no-project python -m tweaker
-```
-
-Linux previews the interface and analyzes imported captures. Windows mutations are refused. The GUI tests skip when Tk/display is unavailable; native registry/QoS tests skip on Linux.
+Linux previews every page and analyzes imported captures; Windows mutations remain refused. Native Windows registry/QoS tests skip on Linux. GUI tests require the declared project dependencies and use Qt's offscreen platform. See [UI architecture and keyboard controls](docs/UI_2.md).
 
 ## Safe workflow
 
 1. Inspect hardware and sustained activity. Review optional startup/task inventories; names alone never prove something is unnecessary.
-2. In Optimize, discover approved apps, search/filter, toggle and read each action. Balanced selects nothing. Competitive proposes the Windows 11 AC-mode experiment; optional apps require individual selection. Windows 10 users can select the classic plan manually. Optional restore points are offered in Settings; snapshots are mandatory regardless.
-3. Apply one persistent change, or use Gaming → Start approved Gaming Mode for temporary eligible selections. Persistent-only selections are excluded from Gaming Mode and never silently applied.
+2. In Optimization, inspect compatibility, discover approved apps, search/filter and read each action. Balanced selects nothing. Competitive proposes the Windows 11 AC-mode experiment; optional apps require individual selection. Windows 10 users can select the classic plan manually. Optional restore points are offered in Restore Center; snapshots are mandatory regardless.
+3. Apply one persistent change, or use Gaming Mode, choose eligible session actions and turn the mode switch on. Persistent-only selections are excluded from Gaming Mode and never silently applied.
 4. Capture repeated matched external frame-time runs with identical monitoring, route, warm-up, graphics, cap and thermal conditions. No capture tool is installed/launched, and no protected game handles are opened.
 5. Import ≥3 independent CSVs per condition under the same experiment context. Compare average, lows, p99, variation and graphs; regressions matter too.
-6. Undo a selected action or restore all. Persistent multi-action Apply is per-action, not atomic; Gaming Mode startup has scoped rollback. Conflicts/errors remain in History for recovery. If the watcher fails, it explicitly disarms and leaves restoration to the user.
+6. Undo a selected action or restore all. Persistent changes are individually confirmed, or explicitly selected under Select multiple and reviewed as a per-action batch; Gaming Mode startup has scoped rollback. Conflicts/errors remain in History for recovery. If the watcher fails, it explicitly disarms and leaves restoration to the user.
 
 Backups/logs/history: `%LOCALAPPDATA%\ApexxTweaks`; Linux preview: `~/.local/share/ApexxTweaks`. Existing installations automatically reuse their populated legacy data folder in place; see [upgrade and rollback compatibility](docs/UPGRADING.md). No snapshots or journal targets are renamed. The 0.1 history format remains readable; new records add action descriptions and session ownership. Preserve snapshot folders and `history.json` until every change is restored. A corrupt journal must be repaired from backups before further writes. App exports can contain usernames, paths, process information and task definitions; review before sharing.
 
@@ -100,7 +99,7 @@ Restore refuses external-setting conflicts. QoS restore of a vanished original p
 
 CSV requires `frametime_ms`, `MsBetweenPresents` or `FrameTime`, in milliseconds, ≥1000 finite positive frames, one process/swapchain. Multiple Application/ProcessID/SwapChainAddress streams are rejected. Duplicate file content is rejected by the UI; renaming a capture is not an independent repeat. Context strings are user-supplied, so matching is still the user's responsibility. New experiment archives previous runs. Legacy 0.1 runs without context can be viewed/exported but must be recaptured with context for the advanced comparison.
 
-FPS = 1000/mean frame time. Lows use the mean of the slowest ceil(1%/0.1%) frames; p99 nearest rank. Intervals resample independent **runs**, not individual autocorrelated frames. Exploratory percentile bootstrap intervals can be unreliable with small samples and do not prove causality. Short/mismatched-duration captures generate warnings. Presentation/frame-generation semantics must match; no capture semantics are inferred from a CSV name. No input-latency metric is fabricated.
+FPS = 1000/mean frame time. Lows use the mean of the slowest ceil(1%/0.1%) frames; p99 nearest rank. Intervals resample independent **runs**, not individual autocorrelated frames. Exploratory percentile bootstrap intervals can be unreliable with small samples and do not prove causality. Short/mismatched-duration captures generate warnings. Presentation/frame-generation semantics must match; no capture semantics are inferred from a CSV name. No input-latency metric is fabricated. Newly imported results also preserve a maximum-of-bucket frame-time trace (up to 300 points), explicitly labeled as downsampled peaks. Legacy results without trace metadata remain readable.
 
 Still absent: thermal/VRAM instrumentation, causal game-thread profiling, continuous trace correlation, end-to-end input latency, per-process network bandwidth, game packet-loss measurement, SMART detail and automated in-game graphics writes. Read-only counters may be absent. GPU engine maxima are screening signals, not aggregate whole-GPU utilization. No memory cleaners, timer/HPET hacks, TCP registry tweaks, security reductions, priority/affinity changes, process suspension, injection, game-file modification or kernel components.
 

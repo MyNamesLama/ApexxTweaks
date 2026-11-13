@@ -10,9 +10,11 @@ def analyze(values):
     if len(frames) < 1000 or any(not math.isfinite(v) or v <= 0 for v in frames):
         raise ValueError('Supply at least 1000 finite positive frame times in milliseconds.')
     descending = sorted(frames, reverse=True)
+    bucket=max(1, math.ceil(len(frames)/300))
     def low(fraction):
         return 1000 / statistics.mean(descending[:max(1, math.ceil(len(frames) * fraction))])
     return dict(frames=len(frames), duration_s=sum(frames)/1000,
+                frame_trace_ms=[max(frames[i:i+bucket]) for i in range(0,len(frames),bucket)], trace_bucket_frames=bucket,
                 average_fps=1000/statistics.mean(frames), low_1=low(.01), low_01=low(.001),
                 p99_ms=sorted(frames)[math.ceil(.99 * len(frames))-1],
                 mean_ms=statistics.mean(frames), stdev_ms=statistics.stdev(frames),

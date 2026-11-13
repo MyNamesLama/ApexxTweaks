@@ -28,7 +28,7 @@ jobs:
           python -m pip install -r requirements-build.txt .
           if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed' }
           python -m pip freeze | Out-File build-dependencies.txt -Encoding utf8
-      - name: Run automated tests (including native Windows and GUI checks)
+      - name: Run automated tests (including native Windows and Qt GUI checks)
         run: |
           python -m unittest discover -s tests -v
           if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }

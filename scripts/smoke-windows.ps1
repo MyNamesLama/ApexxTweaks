@@ -19,7 +19,7 @@ $result = [ordered]@{
     status = 'failed'; tested_utc = [DateTime]::UtcNow.ToString('o')
     os = [System.Runtime.InteropServices.RuntimeInformation]::OSDescription
     archive_sha256 = (Get-FileHash $Archive -Algorithm SHA256).Hash.ToLowerInvariant()
-    test = 'Extracted x64 GUI --smoke-test, isolated app data, no Python on PATH, working directory outside source'
+    test = 'Extracted x64 Qt GUI --smoke-test, isolated app data, no Python on PATH, working directory outside source'
     exit_code = $null; error = $null
 }
 try {
@@ -47,7 +47,7 @@ try {
         throw 'Executable exited without constructing the application (isolated app-data directory absent)'
     }
     $result.status = 'passed'
-    Write-Output 'Packaged Windows GUI smoke test passed (Python/Tcl/Tk resolved from bundle).'
+    Write-Output 'Packaged Windows GUI smoke test passed (Python/Qt Widgets resolved from bundle).'
 } catch {
     $result.error = $_.Exception.Message
     throw

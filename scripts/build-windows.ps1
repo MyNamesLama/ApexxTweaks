@@ -7,8 +7,8 @@ if (-not $IsWindows) { throw 'Build with PowerShell 7 on Windows; PyInstaller ca
 $project = Split-Path -Parent $PSScriptRoot
 Push-Location $project
 try {
-    python -c "import sys, struct, tkinter; assert sys.version_info[:2] == (3, 13), 'Use CPython 3.13'; assert struct.calcsize('P') == 8, 'Use x64 Python'; root=tkinter.Tk(); root.withdraw(); root.update(); root.destroy()"
-    if ($LASTEXITCODE -ne 0) { throw 'Python x64 / Tcl/Tk preflight failed' }
+    python -c "import sys, struct; from PySide6.QtWidgets import QApplication, QWidget; assert sys.version_info[:2] == (3, 13), 'Use CPython 3.13'; assert struct.calcsize('P') == 8, 'Use x64 Python'; app=QApplication([]); window=QWidget(); window.show(); app.processEvents(); window.close()"
+    if ($LASTEXITCODE -ne 0) { throw 'Python x64 / Qt Widgets preflight failed' }
     python -m PyInstaller --noconfirm --clean --distpath dist --workpath build build-support/ApexxTweaks.spec
     if ($LASTEXITCODE -ne 0) { throw 'PyInstaller build failed; inspect build/ApexxTweaks/warn-ApexxTweaks.txt and CI logs' }
     $bundle = Join-Path $project 'dist/ApexxTweaks'

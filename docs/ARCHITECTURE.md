@@ -1,4 +1,4 @@
-# Architecture, v0.2
+# Architecture, ApexxTweaks 2.0
 
 The v0.1 separation is preserved and extended:
 
@@ -12,7 +12,11 @@ The v0.1 separation is preserved and extended:
 - `diagnostics.py`, `telemetry.py`, `analysis.py`: read-only inventories, bounded repeated collection and qualified screening. No background autonomous optimization and no continuous sampling by default.
 - `fortnite.py`: hardware-specific supported UI guidance; no file writes or protected-process interaction.
 - `benchmark.py`: offline frame-time validation/statistics, independent-run bootstrap intervals, context validation. No capture providers or injected measurements.
-- `gui.py`: themed Tk, searchable action table, explicit selection/review, serialized worker, main-thread callbacks, tracked/cancelled timers and experiment management. Windows logon-session mutex prevents ordinary overlapping app instances. Persistent batch apply is per-action; Gaming Mode has rollback scope. Windows Settings changes remain outside the journal.
+- `gui.py`: stable Qt application entry point, Windows single-instance mutex and startup smoke path. Internal package/entry points stay compatible.
+- `ui/controller.py`: serialized QThreadPool adapter over the engine/session, main-thread result/error signals, typed presentation state, benchmark import/export and separate UI preferences. It does not reimplement system writes.
+- `ui/window.py`: collapsible/scrollable navigation, finite transitions, progress/feedback, timer lifecycle, responsive resize and safe close/session restoration.
+- `ui/pages/`: seven focused pages and connected controls; details are on demand, compatibility gates automatic Apply, guided Windows Settings remain outside the journal.
+- `ui/widgets.py`, `icons.py`, `theme.py`, `assets/theme.qss`: reusable cards/switches/wrapping command rows, original stroke icons, antialiased plots and the design system. No browser/QML/QtCharts runtime. See [UI architecture](UI_2.md).
 
 ## Failure model
 
@@ -27,3 +31,5 @@ Snapshots, XML backups, logs and exports are local, user-writable diagnostic art
 ## Product rename compatibility
 
 `branding.py` centralizes ApexxTweaks product identity and the minimum legacy compatibility identifiers. Fresh data uses the new name; populated legacy data is reused in place to preserve absolute snapshot references. Two populated stores are refused instead of silently merged. Both approved optional-task namespaces remain accepted; target IDs/fingerprints are never rewritten. The Windows mutex stays shared with previous versions. Human-readable saved action metadata is rebranded at presentation time; raw history and backup paths remain accurate. See [upgrade instructions](UPGRADING.md).
+
+The benchmark analyzer adds bounded bucket-peak trace metadata without changing FPS/lows/p99 calculations. Older results remain readable. `ui-preferences.json` is separate from legacy settings files. GUI-local selection/state is distinct from a verified backend state; journal presence alone is not proof that a setting remains applied.

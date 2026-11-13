@@ -22,10 +22,12 @@ class BundleValidationTests(unittest.TestCase):
         header[128:132] = b'PE\0\0'
         struct.pack_into('<H', header, 132, 0x8664)
         (self.folder / 'ApexxTweaks.exe').write_bytes(header)
-        for name in ('python313.dll', '_tkinter.pyd', 'init.tcl', 'tk.tcl'):
+        for name in ('python313.dll', 'Qt6Core.dll', 'Qt6Gui.dll', 'Qt6Widgets.dll', 'Qt6Svg.dll', 'qwindows.dll'):
             target = self.folder / '_internal' / name
             target.parent.mkdir(exist_ok=True)
             target.touch()
+        theme=self.folder/'_internal/tweaker/ui/assets/theme.qss'
+        theme.parent.mkdir(parents=True,exist_ok=True); theme.touch()
         for name in ('README.md', 'LICENSE', 'docs/WINDOWS_BUILD.md'):
             target = self.folder / name
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -45,12 +47,18 @@ class BundleValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'AMD64'):
             module.verify(self.folder)
 
-    def test_missing_tk_runtime_rejected(self):
-        (self.folder / '_internal/tk.tcl').unlink()
-        with self.assertRaisesRegex(ValueError, 'tk.tcl'):
+    def test_missing_qt_platform_plugin_rejected(self):
+        (self.folder / '_internal/qwindows.dll').unlink()
+        with self.assertRaisesRegex(ValueError, 'qwindows.dll'):
             module.verify(self.folder)
 
     def test_non_windows_binary_rejected(self):
         (self.folder / 'ApexxTweaks.exe').write_bytes(b'\x7fELF')
         with self.assertRaisesRegex(ValueError, 'Windows PE'):
             module.verify(self.folder)
+
+
+    def test_theme_in_wrong_directory_does_not_mask_missing_packaged_asset(self):
+        theme=self.folder/'_internal/tweaker/ui/assets/theme.qss'
+        theme.unlink(); (self.folder/'theme.qss').touch()
+        with self.assertRaisesRegex(ValueError,'UI asset'): module.verify(self.folder)
