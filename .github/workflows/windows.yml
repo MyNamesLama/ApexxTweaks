@@ -1,0 +1,61 @@
+name: Windows x64 portable build
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    name: Build and smoke-test Windows x64
+    runs-on: windows-2025
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          architecture: 'x64'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements-build.txt
+            pyproject.toml
+      - name: Install build and application dependencies
+        run: |
+          python -m pip install -r requirements-build.txt .
+          if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed' }
+          python -m pip freeze | Out-File build-dependencies.txt -Encoding utf8
+      - name: Run automated tests (including native Windows and GUI checks)
+        run: |
+          python -m unittest discover -s tests -v
+          if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }
+      - name: Package complete standalone application and ZIP
+        run: ./scripts/build-windows.ps1
+      - name: Smoke-test extracted ZIP without Python on PATH
+        run: ./scripts/smoke-windows.ps1
+      - name: Upload tested portable application
+        uses: actions/upload-artifact@v4
+        with:
+          name: FrameWise-windows-x64
+          path: |
+            dist/FrameWise-windows-x64.zip
+            dist/SHA256SUMS.txt
+            dist/windows-smoke.json
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+      - name: Upload diagnostics even when build or smoke test fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FrameWise-windows-build-diagnostics
+          path: |
+            build-dependencies.txt
+            build/FrameWise/warn-FrameWise.txt
+            build/FrameWise/xref-FrameWise.html
+            dist/windows-smoke.json
+          if-no-files-found: warn
+          retention-days: 14

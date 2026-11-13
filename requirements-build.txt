@@ -1,0 +1,2 @@
+# Build-time only; the application currently has no third-party runtime dependencies.
+PyInstaller==6.16.0
